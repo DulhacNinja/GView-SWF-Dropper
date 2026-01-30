@@ -5,8 +5,8 @@ namespace GView::GenericPlugins::Droppper::Multimedia
 // https://samples.mplayerhq.hu/SWF/
 // https://web.archive.org/web/20130202203813/http://wwwimages.adobe.com/www.adobe.com/content/dam/Adobe/en/devnet/swf/pdf/swf-file-format-spec.pdf
 // https://www.slideshare.net/slideshow/how-to-read-swf/14449245
-// 
-// 3 byte magics dont fit neatly into uint32, the 00 byte is actually the version
+
+// 3 byte magics dont fit neatly into uint32, the 00 byte is were the version byte would be
 constexpr uint32 SWF_SIGNATURE_BASE            = 0x00535746; // "FWS"
 constexpr uint32 SWF_SIGNATURE_COMPRESSED_ZLIB = 0x00535743; // "CWS" for version SWF 6+
 constexpr uint32 SWF_SIGNATURE_COMPRESSED_LZMA = 0x0053575A; // "ZWS" for version SWF 13+
@@ -52,7 +52,6 @@ bool SWF::Check(uint64 offset, DataCache& file, BufferView precachedBuffer, Find
     finding.start = offset;
     finding.end   = offset + sizeof(uint8) + sizeof(uint16);
 
-    // because we only work with uncompressed, version must be less than 6
     uint8 version = GetSwfVersion(precachedBuffer);
     CHECK((version > 0), false, "");
     finding.end += sizeof(uint8);
@@ -165,7 +164,7 @@ uint32 SWF::GetSwfTagLength(uint64 offset, DataCache& file)
         return (uint32) length;
 
     // if length is 0x3f, it means it's a long record header -> real length is stored in next 4 bytes as uint32
-    // the "length" value also takes into account it's own 4 byte size
+    // the "length" property also takes into account it's own 4 byte size
     buffer = file.CopyToBuffer(offset + sizeof(uint16), sizeof(uint32), true);
     CHECK(buffer.IsValid(), false, "");
     length = *reinterpret_cast<uint32*>(buffer.GetData());
